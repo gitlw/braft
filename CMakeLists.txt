@@ -1,4 +1,11 @@
-cmake_minimum_required(VERSION 2.8.10)
+cmake_minimum_required(VERSION 3.16)
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR}/cmake")
+include(HunterGate)
+HunterGate(
+  URL "https://github.com/gitlw/hunter/archive/incubator-2023-04-21_03.zip"
+  SHA1 "c5aae0ceb6e789232bfb796a7e5a3f032429f69a"
+  LOCAL
+)
 project(braft C CXX)
 
 SET(CPACK_GENERATOR "DEB")
@@ -19,10 +26,10 @@ if(WITH_DEBUG_SYMBOLS)
     set(DEBUG_SYMBOL "-g")
 endif()
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-
 include(FindThreads)
-include(FindProtobuf)
+hunter_add_package(Protobuf)
+#include(FindProtobuf)
+find_package(Protobuf REQUIRED)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # require at least gcc 4.8
@@ -41,6 +48,7 @@ else()
     message(WARNING "You are using an unsupported compiler! Compilation has only been tested with Clang and GCC.")
 endif()
 
+hunter_add_package(leveldb)
 find_path(LEVELDB_INCLUDE_PATH NAMES leveldb/db.h)
 find_library(LEVELDB_LIB NAMES leveldb)
 if ((NOT LEVELDB_INCLUDE_PATH) OR (NOT LEVELDB_LIB))
@@ -66,6 +74,7 @@ if(LEVELDB_WITH_SNAPPY)
     find_library(SNAPPY_LIB NAMES snappy)
 endif()
 
+hunter_add_package(brpc)
 find_path(BRPC_INCLUDE_PATH NAMES brpc/server.h)
 find_library(BRPC_LIB NAMES libbrpc.a brpc)
 if ((NOT BRPC_INCLUDE_PATH) OR (NOT BRPC_LIB))
@@ -93,6 +102,9 @@ include_directories(
         ${OPENSSL_INCLUDE_DIR}
         )
 
+hunter_add_package(crc32c)
+find_package(crc32c CONFIG REQUIRED)
+
 if(BRPC_WITH_GLOG)
     set(DYNAMIC_LIB
         ${BRPC_LIB}
@@ -105,6 +117,7 @@ if(BRPC_WITH_GLOG)
         ${OPENSSL_CRYPTO_LIBRARY}
         dl
         z
+        crc32c::crc32c
         )
 else()
     set(DYNAMIC_LIB
@@ -117,6 +130,7 @@ else()
         ${OPENSSL_CRYPTO_LIBRARY}
         dl
         z
+        crc32c::crc32c
 	)
 endif()
 
